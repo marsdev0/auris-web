@@ -37,3 +37,29 @@ export interface AgentConfigData {
   max_iterations: number
   max_tokens: number
 }
+
+/** 文章 */
+export interface Article {
+  title: string
+  link: string
+  source: string
+  category: string
+  summary: string
+  published: string
+}
+
+/** ASR 识别结果 */
+export interface ASRData {
+  text: string
+  duration: number
+}
+
+/** 每日早报 */
+export interface BriefingItem {
+  briefing_id: string
+  created_at: string
+  headline: string
+  overview: string
+  article_count: number
+  articles: Article[]
+}

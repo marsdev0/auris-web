@@ -21,6 +21,16 @@ const router = createRouter({
       path: '/config',
       name: 'Config',
       component: () => import('@/views/ConfigView.vue')
+    },
+    {
+      path: '/asr',
+      name: 'ASR',
+      component: () => import('@/views/ASRView.vue')
+    },
+    {
+      path: '/briefing',
+      name: 'Briefing',
+      component: () => import('@/views/BriefingView.vue')
     }
   ]
 })

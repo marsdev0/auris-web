@@ -18,9 +18,17 @@
           <el-icon><VideoPlay /></el-icon>
           <span>任务</span>
         </el-menu-item>
+        <el-menu-item index="/asr">
+          <el-icon><Microphone /></el-icon>
+          <span>语音识别</span>
+        </el-menu-item>
         <el-menu-item index="/config">
           <el-icon><Setting /></el-icon>
           <span>配置</span>
+        </el-menu-item>
+        <el-menu-item index="/briefing">
+          <el-icon><Notebook /></el-icon>
+          <span>早报</span>
         </el-menu-item>
       </el-menu>
     </el-aside>
@@ -32,7 +40,7 @@
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
-import { ChatDotRound, VideoPlay, Setting } from '@element-plus/icons-vue'
+import { ChatDotRound, VideoPlay, Microphone, Setting, Notebook } from '@element-plus/icons-vue'
 
 const route = useRoute()
 </script>
