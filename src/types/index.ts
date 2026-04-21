@@ -5,6 +5,12 @@ export interface CommonResponse<T = unknown> {
   data: T
 }
 
+/** 注册请求 */
+export interface RegisterRequest {
+  username: string
+  password: string
+}
+
 /** 聊天请求 */
 export interface ChatRequest {
   content: string

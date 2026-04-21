@@ -1,5 +1,9 @@
 <template>
-  <el-container class="app-container">
+  <!-- 公共页面：全屏显示，不带侧边栏 -->
+  <router-view v-if="route.meta.public" />
+
+  <!-- 业务页面：侧边栏 + 内容区 -->
+  <el-container v-else class="app-container">
     <el-aside width="200px" class="app-aside">
       <div class="logo">Auris</div>
       <el-menu
