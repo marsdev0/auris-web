@@ -11,6 +11,18 @@ export interface RegisterRequest {
   password: string
 }
 
+/** 登录请求 */
+export interface LoginRequest {
+  username: string
+  password: string
+}
+
+/** Token 响应 */
+export interface TokenData {
+  accessToken: string
+  refreshToken: string
+}
+
 /** 聊天请求 */
 export interface ChatRequest {
   content: string

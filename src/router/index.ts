@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { isLoggedIn } from '@/utils/token'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -6,6 +7,12 @@ const router = createRouter({
     {
       path: '/',
       redirect: '/chat'
+    },
+    {
+      path: '/login',
+      name: 'Login',
+      component: () => import('@/views/LoginView.vue'),
+      meta: { public: true }
     },
     {
       path: '/register',
@@ -39,6 +46,14 @@ const router = createRouter({
       component: () => import('@/views/BriefingView.vue')
     }
   ]
+})
+
+router.beforeEach((to, _from, next) => {
+  if (to.meta.public || isLoggedIn()) {
+    next()
+  } else {
+    next('/login')
+  }
 })
 
 export default router
