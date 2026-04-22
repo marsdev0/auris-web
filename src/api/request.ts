@@ -12,6 +12,7 @@ const ERROR_MSG_MAP: Record<number, string> = {
   30002: '用户不存在',
   30003: '用户名或密码错误',
   30004: '账号已被禁用',
+  30005: '登录已过期，请重新登录',
 }
 
 function getErrorMessage(code: number, msg: string): string {

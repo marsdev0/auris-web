@@ -72,6 +72,13 @@ export interface ASRData {
   duration: number
 }
 
+/** 用户资料 */
+export interface UserProfile {
+  username: string
+  nickname: string
+  avatarUrl: string
+}
+
 /** 每日早报 */
 export interface BriefingItem {
   briefing_id: string
