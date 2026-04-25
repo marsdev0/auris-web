@@ -1,83 +1,118 @@
 <template>
-  <!-- 公共页面：全屏显示，不带侧边栏 -->
+  <!-- 公共页面：全屏显示，不带导航 -->
   <router-view v-if="route.meta.public" />
 
-  <!-- 业务页面：侧边栏 + 内容区 -->
-  <el-container v-else class="app-container">
-    <el-aside width="200px" class="app-aside">
-      <div class="logo">Auris</div>
-      <div class="nav-wrapper">
-        <el-menu
-          :default-active="route.path"
-          router
-          class="nav-menu"
-          background-color="#1d1e2c"
-          text-color="#a0a4b8"
-          active-text-color="#ffffff"
+  <!-- 业务页面：顶部导航 + 内容区 -->
+  <div v-else class="app-layout">
+    <header class="topnav">
+      <div class="tn-logo">Auris</div>
+
+      <nav class="tn-nav">
+        <!-- 核心 -->
+        <div
+          class="tn-item" :class="{ active: route.path === '/avatar' }"
+          @click="router.push('/avatar')"
         >
-          <el-menu-item index="/avatar">
-            <el-icon><Avatar /></el-icon>
-            <span>分身</span>
-          </el-menu-item>
-          <el-menu-item v-if="hasSkill('chat')" index="/chat">
-            <el-icon><ChatDotRound /></el-icon>
-            <span>聊天</span>
-          </el-menu-item>
-          <el-menu-item v-if="hasSkill('task')" index="/task">
-            <el-icon><VideoPlay /></el-icon>
-            <span>任务</span>
-          </el-menu-item>
-          <el-menu-item v-if="hasSkill('asr')" index="/asr">
-            <el-icon><Microphone /></el-icon>
-            <span>语音识别</span>
-          </el-menu-item>
-          <el-menu-item v-if="hasSkill('config')" index="/config">
-            <el-icon><Setting /></el-icon>
-            <span>配置</span>
-          </el-menu-item>
-          <el-menu-item v-if="hasSkill('briefing')" index="/briefing">
-            <el-icon><Notebook /></el-icon>
-            <span>早报</span>
-          </el-menu-item>
-          <el-menu-item v-if="hasSkill('knowledge')" index="/knowledge">
-            <el-icon><Reading /></el-icon>
-            <span>知识库</span>
-          </el-menu-item>
-          <el-menu-item v-if="hasSkill('house')" index="/house">
-            <el-icon><OfficeBuilding /></el-icon>
-            <span>房产</span>
-          </el-menu-item>
+          <el-icon><Avatar /></el-icon><span>分身</span>
+        </div>
+        <div
+          v-if="hasSkill('chat')"
+          class="tn-item" :class="{ active: route.path === '/chat' }"
+          @click="router.push('/chat')"
+        >
+          <el-icon><ChatDotRound /></el-icon><span>聊天</span>
+        </div>
+        <div
+          v-if="hasSkill('task')"
+          class="tn-item" :class="{ active: route.path === '/task' }"
+          @click="router.push('/task')"
+        >
+          <el-icon><VideoPlay /></el-icon><span>任务</span>
+        </div>
 
-          <!-- 管理员专属 -->
-          <div v-if="showAdmin" class="menu-divider" />
-          <el-menu-item v-if="showAdmin" index="/admin/user">
-            <el-icon><UserFilled /></el-icon>
-            <span>用户管理</span>
-          </el-menu-item>
-          <el-menu-item v-if="showAdmin" index="/admin/role">
-            <el-icon><Lock /></el-icon>
-            <span>角色管理</span>
-          </el-menu-item>
-        </el-menu>
+        <!-- 工具 -->
+        <div
+          v-if="hasSkill('asr') || hasSkill('briefing') || hasSkill('knowledge') || hasSkill('house')"
+          class="tn-sep"
+        ></div>
+        <div
+          v-if="hasSkill('asr')"
+          class="tn-item" :class="{ active: route.path === '/asr' }"
+          @click="router.push('/asr')"
+        >
+          <el-icon><Microphone /></el-icon><span>语音识别</span>
+        </div>
+        <div
+          v-if="hasSkill('briefing')"
+          class="tn-item" :class="{ active: route.path === '/briefing' }"
+          @click="router.push('/briefing')"
+        >
+          <el-icon><Notebook /></el-icon><span>早报</span>
+        </div>
+        <div
+          v-if="hasSkill('knowledge')"
+          class="tn-item" :class="{ active: route.path === '/knowledge' }"
+          @click="router.push('/knowledge')"
+        >
+          <el-icon><Reading /></el-icon><span>知识库</span>
+        </div>
+        <div
+          v-if="hasSkill('house')"
+          class="tn-item" :class="{ active: route.path === '/house' }"
+          @click="router.push('/house')"
+        >
+          <el-icon><OfficeBuilding /></el-icon><span>房产</span>
+        </div>
 
-        <div class="nav-footer">
-          <div class="user-info">
-            <el-avatar :size="32" :src="profile.avatarUrl">
-              <el-icon :size="18"><UserIcon /></el-icon>
-            </el-avatar>
-            <span class="user-name">{{ profile.nickname || profile.username }}</span>
+        <!-- 系统 -->
+        <div
+          v-if="hasSkill('config') || showAdmin"
+          class="tn-sep"
+        ></div>
+        <div
+          v-if="hasSkill('config')"
+          class="tn-item" :class="{ active: route.path === '/config' }"
+          @click="router.push('/config')"
+        >
+          <el-icon><Setting /></el-icon><span>配置</span>
+        </div>
+
+        <!-- 管理员 -->
+        <template v-if="showAdmin">
+          <div class="tn-sep"></div>
+          <div
+            class="tn-item" :class="{ active: route.path === '/admin/user' }"
+            @click="router.push('/admin/user')"
+          >
+            <el-icon><UserFilled /></el-icon><span>用户管理</span>
           </div>
-          <div class="logout-btn" @click="handleLogout">
-            <el-icon :size="16"><SwitchButton /></el-icon>
-            <span>退出登录</span>
+          <div
+            class="tn-item" :class="{ active: route.path === '/admin/role' }"
+            @click="router.push('/admin/role')"
+          >
+            <el-icon><Lock /></el-icon><span>角色管理</span>
           </div>
+        </template>
+      </nav>
+
+      <div class="tn-right">
+        <div class="tn-user">
+          <el-avatar :size="28" :src="profile.avatarUrl">
+            <el-icon :size="14"><UserIcon /></el-icon>
+          </el-avatar>
+          <span class="tn-name">{{ profile.nickname || profile.username }}</span>
+        </div>
+        <div class="tn-logout" @click="handleLogout">
+          <el-icon :size="14"><SwitchButton /></el-icon>
+          <span>退出</span>
         </div>
       </div>
-    </el-aside>
-    <el-main class="app-main">
+    </header>
+
+    <main class="app-main">
       <router-view />
-    </el-main>
-  </el-container>
+    </main>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -156,101 +191,154 @@ html, body, #app {
   padding: 0;
   height: 100%;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  background: #0a0a1a;
 }
+</style>
 
-.app-container {
+<style scoped>
+.app-layout {
+  display: flex;
+  flex-direction: column;
   height: 100vh;
 }
 
-.app-aside {
-  background-color: #1d1e2c;
-  overflow: hidden;
+/* ==================== 顶部导航 ==================== */
+.topnav {
+  height: 56px;
+  background: rgba(14, 14, 32, 0.92);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  padding: 0 24px;
+  flex-shrink: 0;
+  z-index: 100;
 }
 
-.nav-wrapper {
-  flex: 1;
+.tn-logo {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-right: 32px;
+  flex-shrink: 0;
+}
+
+.tn-nav {
   display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.nav-menu {
+  align-items: center;
+  gap: 2px;
   flex: 1;
-  border-right: none;
-  overflow-y: auto;
+  min-width: 0;
+  overflow-x: auto;
 }
 
-.nav-menu .el-menu-item {
-  height: 50px;
-  line-height: 50px;
-  font-size: 15px;
+.tn-nav::-webkit-scrollbar { display: none; }
+
+.tn-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 9px;
+  font-size: 13px;
+  color: #52525b;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  user-select: none;
+  position: relative;
 }
 
-.nav-menu .el-menu-item.is-active {
-  background-color: #3a3b50 !important;
+.tn-item:hover {
+  color: #a1a1aa;
+  background: rgba(255, 255, 255, 0.03);
 }
 
-.menu-divider {
-  height: 1px;
+.tn-item.active {
+  color: #e4e4e7;
+  background: rgba(139, 92, 246, 0.12);
+}
+
+.tn-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 2px;
+  border-radius: 1px;
+  background: #8b5cf6;
+}
+
+.tn-item .el-icon {
+  font-size: 16px;
+  opacity: 0.7;
+}
+
+.tn-item.active .el-icon {
+  opacity: 1;
+}
+
+.tn-sep {
+  width: 1px;
+  height: 20px;
   background: rgba(255, 255, 255, 0.06);
-  margin: 8px 16px;
+  margin: 0 6px;
+  flex-shrink: 0;
 }
 
-.nav-footer {
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  padding: 12px 16px;
+/* ==================== 右侧用户区 ==================== */
+.tn-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
-.user-info {
+.tn-user {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #a0a4b8;
-  margin-bottom: 8px;
-  padding: 0 8px;
+  cursor: default;
+  padding: 4px 8px;
+  border-radius: 8px;
 }
 
-.user-name {
+.tn-name {
   font-size: 13px;
+  color: #71717a;
+  max-width: 100px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.logout-btn {
+.tn-logout {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #6b6d80;
-  font-size: 13px;
-  padding: 8px;
-  border-radius: 8px;
+  gap: 5px;
+  font-size: 12px;
+  color: #52525b;
   cursor: pointer;
-  transition: all 0.2s;
+  padding: 6px 10px;
+  border-radius: 7px;
+  transition: all 0.15s;
 }
 
-.logout-btn:hover {
-  background: rgba(255, 255, 255, 0.04);
-  color: #f56c6c;
+.tn-logout:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
 }
 
-.logo {
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  font-weight: 700;
-  color: #ffffff;
-  letter-spacing: 2px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
+/* ==================== 内容区 ==================== */
 .app-main {
-  background-color: #f5f7fa;
-  padding: 0;
+  flex: 1;
   overflow: hidden;
+  padding: 0;
 }
 </style>
