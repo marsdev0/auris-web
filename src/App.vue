@@ -15,25 +15,48 @@
           text-color="#a0a4b8"
           active-text-color="#ffffff"
         >
-          <el-menu-item index="/chat">
+          <el-menu-item index="/avatar">
+            <el-icon><Avatar /></el-icon>
+            <span>分身</span>
+          </el-menu-item>
+          <el-menu-item v-if="hasSkill('chat')" index="/chat">
             <el-icon><ChatDotRound /></el-icon>
             <span>聊天</span>
           </el-menu-item>
-          <el-menu-item index="/task">
+          <el-menu-item v-if="hasSkill('task')" index="/task">
             <el-icon><VideoPlay /></el-icon>
             <span>任务</span>
           </el-menu-item>
-          <el-menu-item index="/asr">
+          <el-menu-item v-if="hasSkill('asr')" index="/asr">
             <el-icon><Microphone /></el-icon>
             <span>语音识别</span>
           </el-menu-item>
-          <el-menu-item index="/config">
+          <el-menu-item v-if="hasSkill('config')" index="/config">
             <el-icon><Setting /></el-icon>
             <span>配置</span>
           </el-menu-item>
-          <el-menu-item index="/briefing">
+          <el-menu-item v-if="hasSkill('briefing')" index="/briefing">
             <el-icon><Notebook /></el-icon>
             <span>早报</span>
+          </el-menu-item>
+          <el-menu-item v-if="hasSkill('knowledge')" index="/knowledge">
+            <el-icon><Reading /></el-icon>
+            <span>知识库</span>
+          </el-menu-item>
+          <el-menu-item v-if="hasSkill('house')" index="/house">
+            <el-icon><OfficeBuilding /></el-icon>
+            <span>房产</span>
+          </el-menu-item>
+
+          <!-- 管理员专属 -->
+          <div v-if="showAdmin" class="menu-divider" />
+          <el-menu-item v-if="showAdmin" index="/admin/user">
+            <el-icon><UserFilled /></el-icon>
+            <span>用户管理</span>
+          </el-menu-item>
+          <el-menu-item v-if="showAdmin" index="/admin/role">
+            <el-icon><Lock /></el-icon>
+            <span>角色管理</span>
           </el-menu-item>
         </el-menu>
 
@@ -61,15 +84,20 @@
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ChatDotRound, VideoPlay, Microphone, Setting, Notebook, SwitchButton, User as UserIcon } from '@element-plus/icons-vue'
-import { logout, getUserProfile } from '@/api/auth'
+import { ChatDotRound, VideoPlay, Microphone, Setting, Notebook, Reading, OfficeBuilding, SwitchButton, UserFilled, Lock, User as UserIcon, Avatar } from '@element-plus/icons-vue'
+import { logout, getUserProfile, getUserSkills } from '@/api/auth'
 import { clearTokens, isLoggedIn } from '@/utils/token'
+import { isAdmin } from '@/api/admin'
 import type { UserProfile } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
 
 const profile = ref<UserProfile>({ username: '', nickname: '', avatarUrl: '' })
+const showAdmin = ref(false)
+const userSkills = ref<Set<string>>(new Set())
+
+const hasSkill = (key: string) => userSkills.value.has(key)
 
 const loadProfile = async () => {
   if (!isLoggedIn()) return
@@ -81,9 +109,23 @@ const loadProfile = async () => {
   }
 }
 
+const loadSkills = async () => {
+  if (!isLoggedIn()) return
+  try {
+    const res = await getUserSkills() as any
+    userSkills.value = new Set(res.data ?? res)
+  } catch {
+    // 静默失败，展示空菜单
+  }
+}
+
 // 初次进入业务页 & 每次路由切换到业务页时加载
 watch(() => route.meta.public, (isPublic) => {
-  if (!isPublic) loadProfile()
+  if (!isPublic) {
+    loadProfile()
+    loadSkills()
+    showAdmin.value = isAdmin()
+  }
 }, { immediate: true })
 
 const handleLogout = async () => {
@@ -148,6 +190,12 @@ html, body, #app {
 
 .nav-menu .el-menu-item.is-active {
   background-color: #3a3b50 !important;
+}
+
+.menu-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 8px 16px;
 }
 
 .nav-footer {

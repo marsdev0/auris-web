@@ -21,7 +21,15 @@ function getErrorMessage(code: number, msg: string): string {
 
 const http = axios.create({
   baseURL: '/api',
-  timeout: 60000
+  timeout: 60000,
+  transformResponse: [data => {
+    if (typeof data === 'string') {
+      // 把超过 JS 安全整数的数字 ID 转为字符串，防止精度丢失
+      data = data.replace(/:\s*(\d{16,})\b/g, ':"$1"')
+      try { return JSON.parse(data) } catch { return data }
+    }
+    return data
+  }]
 })
 
 // 请求拦截：注入 Token

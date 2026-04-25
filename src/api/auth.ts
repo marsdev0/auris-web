@@ -20,3 +20,7 @@ export function logout() {
 export function getUserProfile() {
   return http.get<unknown, UserProfile>('/v1/user/profile')
 }
+
+export function getUserSkills() {
+  return http.get<unknown, string[]>('/v1/user/skills')
+}

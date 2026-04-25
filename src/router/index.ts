@@ -26,6 +26,11 @@ const router = createRouter({
       component: () => import('@/views/ChatView.vue')
     },
     {
+      path: '/avatar',
+      name: 'Avatar',
+      component: () => import('@/views/AvatarView.vue')
+    },
+    {
       path: '/task',
       name: 'Task',
       component: () => import('@/views/TaskView.vue')
@@ -44,6 +49,28 @@ const router = createRouter({
       path: '/briefing',
       name: 'Briefing',
       component: () => import('@/views/BriefingView.vue')
+    },
+    {
+      path: '/knowledge',
+      name: 'Knowledge',
+      component: () => import('@/views/KnowledgeView.vue')
+    },
+    {
+      path: '/house',
+      name: 'House',
+      component: () => import('@/views/HouseView.vue')
+    },
+    {
+      path: '/admin/user',
+      name: 'UserManage',
+      component: () => import('@/views/UserManageView.vue'),
+      meta: { admin: true }
+    },
+    {
+      path: '/admin/role',
+      name: 'RoleManage',
+      component: () => import('@/views/RoleManageView.vue'),
+      meta: { admin: true }
     }
   ]
 })

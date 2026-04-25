@@ -88,3 +88,82 @@ export interface BriefingItem {
   article_count: number
   articles: Article[]
 }
+
+/** 知识库条目 */
+export interface KnowledgeItem {
+  id: number
+  title: string
+  sourceType: 'url' | 'file'
+  sourceUrl?: string
+  sourceName?: string
+  status: 'processing' | 'done' | 'failed'
+  duration?: number
+  summary?: KnowledgeSummary
+  keywords?: string[]
+  transcript?: string
+  createdAt: string
+}
+
+/** 知识库 AI 摘要 */
+export interface KnowledgeSummary {
+  title: string
+  overview: string
+  chapters: KnowledgeChapter[]
+  keyPoints: string[]
+}
+
+/** 知识库章节 */
+export interface KnowledgeChapter {
+  title: string
+  timestamp: string
+  summary: string
+}
+
+/** 楼盘信息 */
+export interface HouseProperty {
+  id: number
+  name: string
+  city: string
+  district: string
+  avgPrice: number
+  totalPriceRange: string
+  area: string
+  tags: string[]
+  score: number
+  school: string
+  schoolLevel: string
+  metro: string
+  developer: string
+  imageUrl: string
+}
+
+/** 楼盘对比项 */
+export interface HouseCompareRow {
+  dimension: string
+  values: string[]
+}
+
+/** Skill 定义 */
+export interface Skill {
+  key: string
+  name: string
+}
+
+/** 角色 */
+export interface Role {
+  id: number
+  name: string
+  description: string
+  skills: string[]
+  userCount: number
+}
+
+/** 管理视角的用户 */
+export interface AdminUser {
+  id: string
+  username: string
+  nickname: string
+  roleName: string
+  status: number
+  createdAt: string
+}
