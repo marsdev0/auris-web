@@ -16,6 +16,12 @@
           <el-icon><Avatar /></el-icon><span>分身</span>
         </div>
         <div
+          class="tn-item" :class="{ active: route.path === '/agent' }"
+          @click="router.push('/agent')"
+        >
+          <el-icon><Monitor /></el-icon><span>Agent</span>
+        </div>
+        <div
           v-if="hasSkill('chat')"
           class="tn-item" :class="{ active: route.path === '/chat' }"
           @click="router.push('/chat')"
@@ -119,7 +125,7 @@
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ChatDotRound, VideoPlay, Microphone, Setting, Notebook, Reading, OfficeBuilding, SwitchButton, UserFilled, Lock, User as UserIcon, Avatar } from '@element-plus/icons-vue'
+import { ChatDotRound, VideoPlay, Microphone, Setting, Notebook, Reading, OfficeBuilding, SwitchButton, UserFilled, Lock, User as UserIcon, Avatar, Monitor } from '@element-plus/icons-vue'
 import { logout, getUserProfile, getUserSkills } from '@/api/auth'
 import { clearTokens, isLoggedIn } from '@/utils/token'
 import { isAdmin } from '@/api/admin'
