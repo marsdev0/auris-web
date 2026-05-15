@@ -318,8 +318,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, nextTick } from 'vue'
+import { ref, reactive, computed, nextTick, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import {
+  getAvatarProfile,
+  addAvatarProfile as apiAddTag,
+  updateAvatarProfile as apiUpdateTag,
+  deleteAvatarProfile as apiDeleteTag,
+  confirmAvatarProfile as apiConfirmTag,
+  rejectAvatarProfile as apiRejectTag,
+  chatStream
+} from '@/api/avatar'
+import type { AvatarProfile } from '@/types'
 
 // ==================== 面板控制 ====================
 const showProfile = ref(false)
@@ -354,27 +364,6 @@ const chatInput = ref('')
 const chatLoading = ref(false)
 const messagesRef = ref<HTMLElement | null>(null)
 
-// mock 回复
-const mockReplies: Record<string, { content: string; proposal?: { id: number; key: string; value: string; evidence: string } }> = {
-  '不喜欢': {
-    content: '记下了。你提到了不喜欢某件事，要我把这个记录为你的偏好吗？',
-    proposal: { id: 201, key: 'dislike_pattern', value: '明确表达不喜欢时会直接说', evidence: '"我不太喜欢..." 多次出现在你的表达中' }
-  },
-  '帮忙': {
-    content: '好的，交给我。等我进入社交模式后，就可以帮你处理这些事情了。目前我还在学习阶段，先把你的偏好了解透彻。'
-  },
-  '风格': {
-    content: '根据我对你的了解，你的沟通风格是<strong>简洁直接</strong>，不寒暄，不用感叹号。常用"好的"、"收到"、"👌"。我会保持这个风格。'
-  },
-  '开会': {
-    content: '了解，我把"不喜欢线上会议，倾向文字讨论"记录下来。',
-    proposal: { id: 202, key: 'meeting_pref', value: '不喜欢线上会议，倾向文字讨论', evidence: '多次表达对线上会议的回避倾向' }
-  },
-  '_default': {
-    content: '收到。我正在持续学习你的表达习惯和偏好，有什么想让我记住的随时告诉我。'
-  }
-}
-
 function scrollToBottom() {
   nextTick(() => {
     if (messagesRef.value) {
@@ -392,32 +381,28 @@ async function sendChat() {
   chatLoading.value = true
   scrollToBottom()
 
-  // mock 延迟
-  await new Promise(r => setTimeout(r, 800 + Math.random() * 700))
+  let assistantIdx = -1
 
-  const matched = Object.entries(mockReplies).find(([key]) => text.includes(key) && key !== '_default')
-  const reply = matched ? matched[1] : mockReplies['_default']
-
-  messages.value.push({
-    id: Date.now() + 1,
-    role: 'assistant',
-    content: reply.content,
-    tagProposal: reply.proposal
-  })
-
-  if (reply.proposal) {
-    pendingTags.value.push({
-      id: reply.proposal.id,
-      key: reply.proposal.key,
-      value: reply.proposal.value,
-      category: '沟通风格',
-      status: 0,
-      evidence: reply.proposal.evidence
-    })
-  }
-
-  chatLoading.value = false
-  scrollToBottom()
+  await chatStream(
+    text,
+    (chunk) => {
+      if (assistantIdx === -1) {
+        chatLoading.value = false
+        messages.value.push({ id: Date.now() + 1, role: 'assistant', content: chunk })
+        assistantIdx = messages.value.length - 1
+      } else {
+        messages.value[assistantIdx].content += chunk
+      }
+      scrollToBottom()
+    },
+    () => {
+      chatLoading.value = false
+    },
+    (err) => {
+      chatLoading.value = false
+      console.error('avatar chat stream error:', err)
+    }
+  )
 }
 
 // ==================== 认知管理 ====================
@@ -430,25 +415,36 @@ interface TagItem {
   evidence?: string
 }
 
-const confirmedTags = ref<TagItem[]>([
-  { id: 1, key: 'reply_style', value: '简洁直接，不寒暄', category: '沟通风格', status: 1 },
-  { id: 2, key: 'tone', value: '专业但友好，不生硬', category: '沟通风格', status: 1 },
-  { id: 3, key: 'humor_level', value: '偏幽默，但不油腻', category: '沟通风格', status: 1 },
-  { id: 4, key: 'emoji_usage', value: '偶尔用，不滥用', category: '沟通风格', status: 1 },
-  { id: 5, key: 'reply_speed', value: '倾向隔 5-10 分钟回复', category: '沟通节奏', status: 1 },
-  { id: 6, key: 'avg_msg_length', value: '偏短，2-3 句话为主', category: '沟通节奏', status: 1 },
-  { id: 7, key: 'stranger_attitude', value: '先公事公办，熟了再放松', category: '社交偏好', status: 1 },
-  { id: 8, key: 'meeting_pref', value: '不喜欢线上会议，倾向文字', category: '社交偏好', status: 1 },
-  { id: 9, key: 'common_phrases', value: '好的、👌、收到', category: '习惯用语', status: 1 },
-  { id: 10, key: 'avoid_phrases', value: '呵呵、亲', category: '习惯用语', status: 1 },
-  { id: 11, key: 'expertise', value: 'Java 后端, AI 工程化, 系统设计', category: '知识偏好', status: 1 },
-  { id: 12, key: 'interests', value: '产品思维, 投资理财, 独立开发', category: '知识偏好', status: 1 },
-])
+const confirmedTags = ref<TagItem[]>([])
+const pendingTags = ref<TagItem[]>([])
+const tagsLoading = ref(false)
 
-const pendingTags = ref<TagItem[]>([
-  { id: 101, key: 'schedule_style', value: '先做最难的那件', category: '社交偏好', status: 0, evidence: '最近一周的任务记录中你总先处理最难的' },
-  { id: 102, key: 'common_phrases', value: '好的、👌、收到、行', category: '习惯用语', status: 0, evidence: '最近 20 条消息中 8 次使用"行"' },
-])
+function toTagItem(p: AvatarProfile): TagItem {
+  return {
+    id: Number(p.id),
+    key: p.tagKey,
+    value: p.tagValue,
+    category: p.category,
+    status: p.status,
+    evidence: p.evidence
+  }
+}
+
+async function loadTags() {
+  tagsLoading.value = true
+  try {
+    const [confirmed, pending] = await Promise.all([
+      getAvatarProfile(1),
+      getAvatarProfile(0)
+    ])
+    confirmedTags.value = (confirmed as any).data?.map(toTagItem) ?? []
+    pendingTags.value = (pending as any).data?.map(toTagItem) ?? []
+  } catch {
+    // 静默失败，不影响聊天
+  } finally {
+    tagsLoading.value = false
+  }
+}
 
 const tagGroups = computed(() => {
   const groups: Record<string, TagItem[]> = {}
@@ -459,53 +455,57 @@ const tagGroups = computed(() => {
   return Object.entries(groups).map(([category, tags]) => ({ category, tags }))
 })
 
-function confirmProposal(id: number) {
-  const idx = pendingTags.value.findIndex(t => t.id === id)
-  if (idx === -1) return
-  const tag = pendingTags.value.splice(idx, 1)[0]
-  tag.status = 1
-  confirmedTags.value.push(tag)
-  ElMessage.success(`已确认标签「${tag.key}」`)
+async function confirmProposal(id: number) {
+  try {
+    await apiConfirmTag(String(id))
+    const idx = pendingTags.value.findIndex(t => t.id === id)
+    if (idx === -1) return
+    const tag = pendingTags.value.splice(idx, 1)[0]
+    tag.status = 1
+    confirmedTags.value.push(tag)
+    ElMessage.success(`已确认标签「${tag.key}」`)
+  } catch { /* interceptor handles */ }
 }
 
-function rejectProposal(id: number) {
-  const idx = pendingTags.value.findIndex(t => t.id === id)
-  if (idx === -1) return
-  const tag = pendingTags.value.splice(idx, 1)[0]
-  ElMessage.info(`已拒绝标签「${tag.key}」`)
-  // 也移除对话中的 proposal
-  messages.value.forEach(msg => {
-    if (msg.tagProposal?.id === id) msg.tagProposal = undefined
-  })
+async function rejectProposal(id: number) {
+  try {
+    await apiRejectTag(String(id))
+    const idx = pendingTags.value.findIndex(t => t.id === id)
+    if (idx === -1) return
+    pendingTags.value.splice(idx, 1)
+    messages.value.forEach(msg => {
+      if (msg.tagProposal?.id === id) msg.tagProposal = undefined
+    })
+    ElMessage.info('已拒绝标签')
+  } catch { /* interceptor handles */ }
 }
 
-function deleteTag(id: number) {
-  const idx = confirmedTags.value.findIndex(t => t.id === id)
-  if (idx === -1) return
-  const tag = confirmedTags.value.splice(idx, 1)[0]
-  ElMessage.success(`已删除标签「${tag.key}」`)
+async function deleteTag(id: number) {
+  try {
+    await apiDeleteTag(String(id))
+    const idx = confirmedTags.value.findIndex(t => t.id === id)
+    if (idx !== -1) confirmedTags.value.splice(idx, 1)
+    ElMessage.success('已删除标签')
+  } catch { /* interceptor handles */ }
 }
 
 const showAddDialog = ref(false)
 const newTag = reactive({ category: '', key: '', value: '' })
 
-function addTag() {
+async function addTag() {
   if (!newTag.key || !newTag.value) {
     ElMessage.warning('请填写标签键和值')
     return
   }
-  confirmedTags.value.push({
-    id: Date.now(),
-    key: newTag.key,
-    value: newTag.value,
-    category: newTag.category || '沟通风格',
-    status: 1
-  })
-  showAddDialog.value = false
-  newTag.category = ''
-  newTag.key = ''
-  newTag.value = ''
-  ElMessage.success('标签已添加')
+  try {
+    await apiAddTag({ category: newTag.category || '沟通风格', tagKey: newTag.key, tagValue: newTag.value })
+    showAddDialog.value = false
+    newTag.category = ''
+    newTag.key = ''
+    newTag.value = ''
+    ElMessage.success('标签已添加')
+    loadTags()
+  } catch { /* interceptor handles */ }
 }
 
 const showEditDialog = ref(false)
@@ -516,14 +516,17 @@ function editTag(tag: TagItem) {
   showEditDialog.value = true
 }
 
-function saveEdit() {
+async function saveEdit() {
   if (!editingTag.value) return
-  const idx = confirmedTags.value.findIndex(t => t.id === editingTag.value!.id)
-  if (idx !== -1) {
-    confirmedTags.value[idx].value = editingTag.value.value
-  }
-  showEditDialog.value = false
-  ElMessage.success('标签已更新')
+  try {
+    await apiUpdateTag(String(editingTag.value.id), { tagValue: editingTag.value.value })
+    const idx = confirmedTags.value.findIndex(t => t.id === editingTag.value!.id)
+    if (idx !== -1) {
+      confirmedTags.value[idx].value = editingTag.value.value
+    }
+    showEditDialog.value = false
+    ElMessage.success('标签已更新')
+  } catch { /* interceptor handles */ }
 }
 
 // ==================== 权限配置 ====================
@@ -578,6 +581,11 @@ function setAutonomyLevel(level: number) {
   }
   ElMessage.success(`已切换到 Lv.${level} ${autonomyLevels.find(l => l.value === level)?.name}`)
 }
+
+// ==================== 初始化 ====================
+onMounted(() => {
+  loadTags()
+})
 </script>
 
 <style scoped>

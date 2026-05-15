@@ -167,3 +167,15 @@ export interface AdminUser {
   status: number
   createdAt: string
 }
+
+/** 分身偏好标签 */
+export interface AvatarProfile {
+  id: string
+  category: string
+  tagKey: string
+  tagValue: string
+  evidence?: string
+  confidence: number
+  status: number
+  createdAt: string
+}
